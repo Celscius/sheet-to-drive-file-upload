@@ -1,0 +1,109 @@
+<script>
+  let title
+  let description
+  let selectedFile
+
+  let fileName
+  let fileType
+  let fileSize
+  let fileContent
+
+/**
+ * Main application initializer.
+ * @listens document#DOMContentLoaded
+ */
+function main(){
+  const loader =      /** @type {HTMLElement}             */       document.getElementById('loader');
+  const content =     /** @type {HTMLElement}             */       document.getElementById('app');
+  const form =        /** @type {HTMLElement} - Form      */     document.getElementById('upload');
+  
+  let name =        /** @type {HTMLElement} - textInput */       document.getElementById("name")
+  let description = /** @type {HTMLElement} - textArea  */ document.getElementById("textarea")
+  let fileInput =   /** @type {HTMLElement} - Button    */    document.getElementById('file');
+    
+    // Function to show the loader
+    function showLoader() {
+        loader.style.display = 'flex';
+        content.style.display = 'none';
+    }
+
+    // Function to hide the loader and show content
+    function hideLoader() {
+        loader.style.display = 'none';
+        content.style.display = 'block';
+    }
+
+    const clearValue = () =>{
+        title = null
+        description = null
+
+        fileName = null
+        fileType = null
+        fileSize = null
+        fileContent = null
+
+        // clear html element value
+        name.value = ""
+        description.value = "" 
+        fileInput.value = ""
+    }
+
+    // get attribute file from uploaded file using button and store it value
+    fileInput.addEventListener('change', (event) => {
+        // Access the selected files here
+        const files = event.target.files;
+
+        // when uploaded file not null, get the first file
+        if (files.length > 0) {
+            selectedFile = files[0]; // Get the first selected file
+            fileName = selectedFile.name
+            fileType = selectedFile.type
+            fileSize = selectedFile.size
+
+            // You can then use FileReader to read the file content
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                fileContent = e.target.result;
+                // console.log('file content: ', fileContent.substring(0, 100))
+            };
+            reader.readAsArrayBuffer(selectedFile);
+            // reader.readAsText(selectedFile); // Or readAsDataURL, readAsArrayBuffer, etc.
+        } else {
+            console.log('No file selected.');
+        }
+    });
+
+    // send form data to google appscript
+    form.addEventListener('submit', (event) => {
+      // Prevent the default form submission behavior (page reload)
+      event.preventDefault();
+      showLoader()
+
+      // this used to send uploaded file to google drive
+      const bytes = [...new Int8Array(fileContent)]
+
+      const file = {
+        title: name.value,
+        description: description.value,
+        fileName: fileName,
+        mimeType: fileType,
+        size: fileSize,
+        bytes: bytes
+      };
+      
+      google.script.run
+        .withFailureHandler(()=> {
+              hideLoader()
+          })
+        .withSuccessHandler(()=> {
+              // clearValue()
+              hideLoader()
+          })
+        .app(file);
+    });
+}
+
+// Wait for the DOM to load before adding the listener
+document.addEventListener('DOMContentLoaded', main);
+</script>
