@@ -1,7 +1,3 @@
-/**
- * this function gonna run when sheet open and create custom menus
- */
-
 function onOpen() {
   new MenuHandler({
     menuName: 'App',
